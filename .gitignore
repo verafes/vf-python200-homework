@@ -1,0 +1,20 @@
+# IDEs
+.idea/
+.vscode/
+
+# macOS
+.DS_Store*
+
+# Python cache / pytest
+__pycache__/
+.pytest_cache/
+
+# Virtual environment
+.venv/
+
+# Logs / temp
+*.log
+CACHEDIR.TAG
+
+# Other languages
+*.rb
