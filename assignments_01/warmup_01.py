@@ -75,7 +75,7 @@ def tasks_part_one():
     print(f"Array 1D: {arr1D}")
     print(f"Shape: {arr1D.shape}")
     print(f"Dtype: {arr1D.dtype}")
-    print(f"ndim: {arr1D.dtype}")
+    print(f"ndim: {arr1D.ndim}")
 
     print("\n--- NumPy Q2 ---")
     # Create 2D array and print shape + size (total elements)
@@ -159,7 +159,7 @@ def tasks_part_one():
     plt.xlabel("x")
     plt.ylabel("y")
     plt.legend()
-    plt.savefig("outputs/matplotlib_q2_scatter_plot_comparison.png")
+    plt.savefig("outputs/matplotlib_q3_scatter_plot_comparison.png")
     plt.show()
 
     #--- Matplotlib Q4 ---
@@ -266,7 +266,7 @@ def tasks_part_one():
     Mode is most frequent value.
     """
 
-    # --- Descriptive Statistics ---
+    # --- Hypothesis Testing ---
 
     print("\n--- Hypothesis Q1 ---")
     # Independent samples t-test
