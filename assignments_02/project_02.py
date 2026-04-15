@@ -54,7 +54,7 @@ print(f"\nG3 histogram saved to {OUTPUT_DIR}")
 
 # The histogram shows a big spike at G3 = 0. These zeros are not real grades,
 # they represent students who didn’t take the final exam. That’s why they sit apart
-# from the rest of the grade distribution (grades 1–20)--it visually confirms
+# from the rest of the grade distribution (grades 1-20)--it visually confirms
 # that they are missing targets, not valid low grades and must be removed before modeling.
 
 
@@ -64,7 +64,7 @@ print(f"Original shape: {df.shape}")
 
 # Verify G3 exists
 if "G3" not in df.columns:
-    raise ValueError("Column 'G3' missing — dataset is invalid.")
+    raise ValueError("Column 'G3' missing--dataset is invalid.")
 
 # Checking how many students have G3 = 0 (absent from exam)
 g3_zero_count = (df["G3"] == 0).sum()
@@ -101,7 +101,7 @@ corr_filtered = df_clean["absences"].corr(df_clean["G3"])
 print(f"\nCorr(absences, G3) original dataset:  {corr_original:.4f}")
 print(f"Corr(absences, G3) filtered dataset: {corr_filtered:.4f}")
 
-# Why does the absences–G3 correlation change?
+# Why does the absences-G3 correlation change?
 # In the original data, many students with G3 = 0 also have very high absences.
 # Because all of them share the same final grade (0), their absences don't line up
 # with different G3 values, so the correlation looks weaker.
@@ -204,9 +204,9 @@ print(f"RMSE: {rmse:.4f}")
 print(f"R2: {r2:.4f}")
 
 # The slope shows how much G3 changes per additional failure.
-# Since grades are 0–20, a negative slope means each failure reduces expected score.
+# Since grades are 0-20, a negative slope means each failure reduces expected score.
 # RMSE shows average prediction error in grade points.
-# R2 shows how much variance is explained — usually low here because one feature is not enough.
+# R2 shows how much variance is explained--usually low here because one feature is not enough.
 
 
 # --- Task 5: Build the Full Model ---
@@ -267,7 +267,7 @@ print("\n--- Summary ---")
 print(f"Filtered dataset size: {df_clean.shape[0]} students")
 print(f"Test set size: {len(y_test)} students")
 print(f"Best model RMSE {rmse:.2f}. This means the model is typically off by about {rmse:.1f}"
-      f" in grade points on a 0–20 scale. This is roughly the difference between a full letter grade.")
+      f" in grade points on a 0-20 scale. This is roughly the difference between a full letter grade.")
 print(f"Best model R2 {r2_test:.4f} means the model explains about {r2_test*100:.0f}% variation in final grades."
       f"Most variation is still unexplained.")
 print("Largest positive/negative coefficients indicate strongest predictors.")
@@ -332,6 +332,6 @@ print(f"Jump in R2              : {r2_test_g1 - r2_test:.4f}")
 # So the model is only telling us what the teacher already knows from the first grade.
 
 # If teachers want to help students before they fall behind, they need information
-# that comes earlier than G1 — things like attendance patterns, study habits,
+# that comes earlier than G1--things like attendance patterns, study habits,
 # support at home, or past failures. Those early signals are more matter useful
 # for early intervention than a grade that already reflects how student is doing.

@@ -2,9 +2,7 @@
 import os
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
@@ -92,10 +90,9 @@ plt.title("K-Means Clusters")
 plt.xlabel("Feature 1")
 plt.ylabel("Feature 2")
 
-# Save figure
 plt.savefig("outputs/kmeans_clusters.png")
-plt.show()
 plt.close()
+print(f"\nK-Means Clusters scatter plot saved to assignments_02/outputs")
 
 # --- Linear Regression ---
 
@@ -117,7 +114,7 @@ plt.colorbar(label="Smoker (1 = smoker)")
 plt.tight_layout()
 
 plt.savefig("outputs/cost_vs_age.png")
-plt.show()
+print(f"\nMedical Cost vs Age scatter plot saved to assignments_02/outputs")
 
 # The plot shows two clear groups: Smokers (red points) have consistently higher costs,
 # while Non‑smokers (blue points) have lower cost at every age.
@@ -197,7 +194,7 @@ plt.title("Predicted vs Actual")
 plt.xlabel("Predicted Cost")
 plt.ylabel("Actual Cost")
 plt.savefig("outputs/predicted_vs_actual.png")
-plt.show()
+print(f"\nPredicted vs Actual plot to assignments_02/outputs")
 
 # Points above the diagonal `mean actual > predicted` (model underestimates).
 # Points below `mean predicted > actual` (model overestimates)
