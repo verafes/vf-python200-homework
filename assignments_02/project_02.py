@@ -55,7 +55,7 @@ print(f"\nG3 histogram saved to {OUTPUT_DIR}")
 # The histogram shows a big spike at G3 = 0. These zeros are not real grades,
 # they represent students who didn’t take the final exam. That’s why they sit apart
 # from the rest of the grade distribution (grades 1–20)--it visually confirms
-# that they are missing targets, not valid low grades.
+# that they are missing targets, not valid low grades and must be removed before modeling.
 
 
 # --- Task 2: Preprocess Data ---
@@ -233,6 +233,9 @@ print(f"RMSE: {rmse:.4f} \n")
 for name, coef in zip(feature_cols, model.coef_):
     print(f"{name:12s} {coef:+.4f}")
 
+# Compare train vs test R2: if close → low overfitting. If far apart → overfitting.
+# Largest positive coefficients indicate features associated with higher grades.
+# Largest negative coefficients indicate risk factors for lower grades.
 
 # --- Task 6: Predicted vs Actual Plot ---
 print("\n--- Task 6: Predicted vs Actual ---")
@@ -251,8 +254,73 @@ plt.ylabel("Actual G3")
 plt.tight_layout()
 
 plt.savefig(f"{OUTPUT_DIR}/predicted_vs_actual.png")
+plt.close()
+
 print(f"Predicted vs Actual scatter saved to {OUTPUT_DIR}")
 
+# Points above diagonal = mean the model predicted too low (model underestimates).
+# Points below diagonal = mean the model predicted too high (model overestimates).
+# Errors tend to be larger at the high end, meaning the model struggles predicting top performers.
+
+# --- Plain-language summary ---
+print("\n--- Summary ---")
+print(f"Filtered dataset size: {df_clean.shape[0]} students")
+print(f"Test set size: {len(y_test)} students")
+print(f"Best model RMSE {rmse:.2f}. This means the model is typically off by about {rmse:.1f}"
+      f" in grade points on a 0–20 scale. This is roughly the difference between a full letter grade.")
+print(f"Best model R2 {r2_test:.4f} means the model explains about {r2_test*100:.0f}% variation in final grades."
+      f"Most variation is still unexplained.")
+print("Largest positive/negative coefficients indicate strongest predictors.")
+print("One surprising result should be explained in comments above.")
+
+# Coefficient interpretation
+coefs  = dict(zip(feature_cols, model.coef_))
+sorted_coefs = sorted(coefs.items(), key=lambda x: x[1])
+
+largest_negative = sorted_coefs[:2]
+largest_positive = sorted_coefs[-2:]
+
+print(f"\nTwo largest POSITIVE coefficients:")
+for name, coef in largest_positive:
+    print(f"  {name:12s} {coef:+.4f}")
+
+# These features are associated with higher final grades. Students who want to pursue
+# higher education tend to perform better, and students with internet access show a small
+# positive association with G3.
+
+print(f"Two largest NEGATIVE coefficients:")
+for name, coef in largest_negative:
+    print(f"  {name:12s} {coef:+.4f}")
+
+# These features are associated with lower final grades. Extra school support (schoolsup)
+# is negative because it is typically assigned to struggling students, not because support
+# harms performance. Past failures strongly predict lower final grades.
+
+# One surprising result:
+# Internet has a larger positive coefficient than expected (+0.8341).
+# Despite the simple correlation was tiny, once the model looks at all features together,
+# internet access shows a stronger association with higher grades than anticipated
+
+
+# --- Neglected Feature: Add G1 to the Full Model ---
+print("\n--- Extra: Full Model + G1 Feature ---")
+
+feature_cols_and_g1 = feature_cols + ["G1"]
+
+X = df_clean[feature_cols_and_g1].values
+y = df_clean["G3"].values
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+model_g1 = LinearRegression().fit(X_train, y_train)
+y_pred_g1 = model_g1.predict(X_test)
+r2_test_g1 = r2_score(y_test, y_pred_g1)
+
+print(f"Test R2 without G1      : {r2_test:.4f}")
+print(f"Test R2 with G1 included: {r2_test_g1:.4f}")
+print(f"Jump in R2              : {r2_test_g1 - r2_test:.4f}")
 
 # Adding G1 makes the model much stronger. The test R2 jumps from about 0.15 to around 0.80.
 # This does NOT mean that G1 causes G3. It just means that students who do well
