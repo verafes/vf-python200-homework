@@ -57,6 +57,7 @@ print(np.mean(X_train_scaled, axis=0))
 # Why fit on X_train only?
 # Fitting only on X_train prevents information from the test set leaking into the model.
 
+
 # --- KNN ---
 
 # Q1: Unscaled Data
@@ -70,7 +71,6 @@ knn_unscaled_acc = accuracy_score(y_test, y_pred_unscaled)
 print(f"Accuracy (unscaled): {knn_unscaled_acc}")
 print(f"\nClassification Report (unscaled): ")
 print(classification_report(y_test, y_pred_unscaled, target_names=iris.target_names))
-# print("\n!!", classification_report(y_test, y_pred_unscaled))
 
 
 # Q2: Unscaled KNN
@@ -82,7 +82,6 @@ knn_scaled.fit(X_train_scaled, y_train)
 y_pred_scaled = knn_scaled.predict(X_test_scaled)
 
 print(f"Accuracy (scaled): {accuracy_score(y_test, y_pred_scaled):.4f}")
-
 
 # Scaling may improve or make little difference.
 # Iris features (cm) are already similar in size, so impact is usually very minor.
@@ -153,7 +152,6 @@ disp.plot(cmap="Blues")
 plt.title("KNN Confusion Matrix (Unscaled Data)")
 plt.tight_layout()
 plt.savefig("outputs/knn_confusion_matrix.png")
-# plt.show()
 plt.close()
 print(f"\nSample Digits plot saved to assignments_03/outputs")
 
@@ -202,4 +200,92 @@ for C in C_values:
 # A small C means strong regularization, which keeps weights small to prevent overfitting.
 # A large C weakens regularization, allowing the model to use larger weights to fit the data.
 
+
+# --- PCA (Digits dataset) ---
+
+# Digits dataset : 1797 images of handwritten digits
+# each digit is an 8×8 image (64 pixels), each pixel has a value 0–16 (brightness)
+
+digits = load_digits()
+X_digits = digits.data    # 1797 images, each flattened to 64 pixel values
+y_digits = digits.target  # digit labels 0-9
+images   = digits.images  # same data shaped as 8x8 images for plotting
+
+# PCA Q1: Shapes and sample digit grid
+print("\n--- PCA Q1 ---")
+# sanity check: print to confirm the structure of the dataset
+print(f"X_digits shape: {X_digits.shape}")
+print(f"Images shape: {images.shape}")
+
+#
+plt.figure(figsize=(10, 2))
+unique_digits = np.unique(y_digits)
+
+# create a 1-row subplot with 10 images, one example of each digit 0–9
+for idx, digit in enumerate(unique_digits):
+    ax = plt.subplot(1, 10, idx + 1)
+    sample_idx = np.where(y_digits == digit)[0][0]
+    ax.imshow(images[sample_idx], cmap='gray_r')
+    ax.set_title(str(digit))
+    ax.axis("off")
+
+plt.tight_layout()
+plt.savefig("outputs/sample_digits.png")
+# plt.show()
+plt.close()
+print(f"\nSample Digits plot saved to assignments_03/outputs")
+
+
+# PCA Q2: Fit PCA and 2D projection
+print("\n--- PCA Q2 ---")
+
+# fit PCA on the full 64‑dimensional digit data
+pca = PCA()
+pca.fit(X_digits)
+
+# transform the data into PCA 'scores'
+scores = pca.transform(X_digits)
+
+# Plot the first two principal components (PC1 vs. PC2)
+plt.figure(figsize=(6, 5))
+scatter = plt.scatter(scores[:, 0], scores[:, 1], c=y_digits, cmap='tab10', s=10)
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.title("2D PCA Projection of Handwritten Digits")
+plt.colorbar(scatter, label='Digit')
+plt.tight_layout()
+plt.savefig("outputs/pca_2d_projection.png")
+# plt.show()
+plt.close()
+print(f"PCA 2D Projection scatter plot saved to assignments_03/outputs")
+
+# In this 2D PCA space, images of the same digit tend to cluster together,
+# although there is still some overlap between similar digits.
+
+
+# PCA Q3: Cumulative explained variance
+print("\n--- PCA Q3 ---")
+# Compute the cumulative explained variance
+cum_variance = np.cumsum(pca.explained_variance_ratio_)
+
+# Plot it against the number of components (1 through 64)
+plt.figure(figsize=(6, 4))
+plt.plot(cum_variance, marker='o', color="orange")
+plt.xlabel("Number of Components")
+plt.ylabel("Cumulative Explained Variance")
+plt.title("PCA: Cumulative Variance Explained")
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig("outputs/pca_variance_explained.png")
+# plt.show()
+plt.close()
+print(f"PCA Variance Explained plot saved to assignments_03/outputs")
+
+# Approximate number of components needed for 80% variance
+n_80 = np.argmax(cum_variance >= 0.80) + 1
+print(f"\nApprox. number of components for 80% variance: {n_80}")
+
+# We need roughly 13 components to explain about 80% of the variance.
+# This is where the curve starts to level off and additional components
+# contribute less additional information.
 
