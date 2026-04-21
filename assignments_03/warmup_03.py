@@ -289,3 +289,50 @@ print(f"\nApprox. number of components for 80% variance: {n_80}")
 # This is where the curve starts to level off and additional components
 # contribute less additional information.
 
+# PCA Q4: Reconstructions with different numbers of components
+print("\n--- PCA Q4 ---")
+
+def reconstruct_digit(sample_idx, scores, pca, n_components):
+    """Reconstruct one digit using the first n_components principal components."""
+    reconstruction = pca.mean_.copy()
+    for i in range(n_components):
+        reconstruction = reconstruction + scores[sample_idx, i] * pca.components_[i]
+    return reconstruction.reshape(8, 8)
+
+n_values = [2, 5, 15, 40]
+num_samples = 5  # first 5 digits
+
+plt.figure(figsize=(10, 8))
+
+# Row 0: original images
+for j in range(num_samples):
+    ax = plt.subplot(len(n_values) + 1, num_samples, j + 1)
+    ax.imshow(images[j], cmap='gray_r')
+    if j == 0:
+        ax.set_ylabel("Original", rotation=0, labelpad=40, va='center')
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+# Rows for reconstructions
+for row_idx, n in enumerate(n_values, start=1):
+    for col_idx in range(num_samples):
+        ax = plt.subplot(len(n_values) + 1, num_samples,
+                         row_idx * num_samples + col_idx + 1)
+        recon = reconstruct_digit(col_idx, scores, pca, n)
+        ax.imshow(recon, cmap='gray_r')
+        if col_idx == 0:
+            ax.set_ylabel(f"n={n}", rotation=0, labelpad=40, va='center')
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+plt.suptitle("Digit Reconstructions with Different Numbers of PCA Components")
+plt.tight_layout(rect=[0, 0, 1, 0.95])
+plt.savefig("outputs/pca_reconstructions.png")
+# plt.show()
+plt.close()
+print(f"PCA Reconstructions plot saved to assignments_03/outputs")
+
+# The digits become clearly recognizable somewhere around n=15–40 components.
+# This roughly matches where the cumulative variance curve starts to level off,
+# meaning most of the important structure is captured by those components.
+
