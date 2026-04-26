@@ -231,7 +231,6 @@ for idx, digit in enumerate(unique_digits):
 
 plt.tight_layout()
 plt.savefig("outputs/sample_digits.png")
-# plt.show()
 plt.close()
 print(f"\nSample Digits plot saved to assignments_03/outputs")
 
@@ -255,7 +254,6 @@ plt.title("2D PCA Projection of Handwritten Digits")
 plt.colorbar(scatter, label='Digit')
 plt.tight_layout()
 plt.savefig("outputs/pca_2d_projection.png")
-# plt.show()
 plt.close()
 print(f"PCA 2D Projection scatter plot saved to assignments_03/outputs")
 
@@ -277,7 +275,6 @@ plt.title("PCA: Cumulative Variance Explained")
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig("outputs/pca_variance_explained.png")
-# plt.show()
 plt.close()
 print(f"PCA Variance Explained plot saved to assignments_03/outputs")
 
@@ -328,11 +325,9 @@ for row_idx, n in enumerate(n_values, start=1):
 plt.suptitle("Digit Reconstructions with Different Numbers of PCA Components")
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 plt.savefig("outputs/pca_reconstructions.png")
-# plt.show()
 plt.close()
 print(f"PCA Reconstructions plot saved to assignments_03/outputs")
 
 # The digits become clearly recognizable somewhere around n=15–40 components.
 # This roughly matches where the cumulative variance curve starts to level off,
 # meaning most of the important structure is captured by those components.
-
