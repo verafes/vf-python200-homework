@@ -113,7 +113,6 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
         print(f"Improved: {item['improved']}\n")
 
     return response_data
-    # return response
 
 # Test Data
 bullets = [
@@ -299,6 +298,14 @@ def run_chatbot():
         if not is_safe(user_input):
             continue  # is_safe() already printed the warning message
 
+        # explicit numeric menu selection
+        if user_input == "1":
+            user_input = "resume"
+        elif user_input == "2":
+            user_input = "cover letter"
+        elif user_input == "3":
+            pass
+
         # 5. Check if the user wants to rewrite bullets
         #    (hint: look for keywords like "bullet" or "resume" in user_input.lower())
         if "bullet" in user_input.lower() or "resume" in user_input.lower():
@@ -331,7 +338,6 @@ def run_chatbot():
         # 7. Otherwise, handle it as a regular chat turn
         else:
             messages.append({"role": "user", "content": user_input})
-            # reply = get_completion(messages)
             reply_obj = get_completion(messages)
             reply = reply_obj.choices[0].message.content
             print(f"\nJob Application Helper: {reply}\n")
