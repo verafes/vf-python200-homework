@@ -22,11 +22,11 @@ def get_completion(messages, model="gpt-4o-mini", temperature=0.7):
         temperature=temperature,
         max_completion_tokens=400
     )
-    return response.choices[0].message.content
+
+    return response
 
 
 # --- Task 1: Setup and System Prompt ---
-print("\n--- Task 1 ---")
 
 system_prompt = """
 You are a job application coach. You help people who are changing careers or applying
@@ -89,7 +89,8 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
     """
 
     messages = [{"role": "user", "content": prompt}]
-    response_text = get_completion(messages)
+    response = get_completion(messages)
+    response_text = response.choices[0].message.content
 
     clean_text = (
         response_text
@@ -112,6 +113,7 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
         print(f"Improved: {item['improved']}\n")
 
     return response_data
+    # return response
 
 # Test Data
 bullets = [
@@ -190,7 +192,7 @@ background = (
 
 result = generate_cover_letter(job_title, background)
 print(f"Cover letter for {job_title}:")
-print(result)
+print(result.choices[0].message.content)
 
 # I chose two examples in the prompt because they show strong career transitions
 # with clear connection between previous experience and new technical skills.
@@ -207,7 +209,7 @@ background_2 = (
 
 result = generate_cover_letter(job_title_2, background_2)
 print(f"\nCover letter for {job_title_2}:")
-print(result)
+print(result.choices[0].message.content)
 
 # My examples both follow the same pattern. So the model learned this template and reused it.
 # I need to update my prompt to force the model varied sentence structure so to not reuse the same rhythm.
@@ -266,6 +268,7 @@ print(f"Categories: {result.results[0].categories}")
 print("\n--- Task 5 ---")
 
 def run_chatbot():
+    total_token_usage = 0
     # 1. Initialize conversation history with your system prompt
     messages = [
         {"role": "system", "content": system_prompt}
@@ -309,14 +312,17 @@ def run_chatbot():
                 if line:
                     raw_bullets.append(line)
 
-            rewrite_bullets(raw_bullets)
+            reply_obj = rewrite_bullets(raw_bullets)
+            total_token_usage += reply_obj.usage.total_tokens
+            print(f"[Token Tracker] Total tokens used so far: {total_token_usage}")
             continue
 
         # 6. Check if the user wants a cover letter
         elif "cover letter" in user_input.lower():
             job_title = input("Job Application Helper: What is the job title? ").strip()
             background = input("Job Application Helper: Briefly describe your background: ").strip()
-            cover = generate_cover_letter(job_title, background)
+            cover_obj = generate_cover_letter(job_title, background)
+            cover = cover_obj.choices[0].message.content
             print("\nHere is a draft opening paragraph for your cover letter:\n")
             print(cover)
             print()
@@ -325,12 +331,22 @@ def run_chatbot():
         # 7. Otherwise, handle it as a regular chat turn
         else:
             messages.append({"role": "user", "content": user_input})
-            reply = get_completion(messages)
+            # reply = get_completion(messages)
+            reply_obj = get_completion(messages)
+            reply = reply_obj.choices[0].message.content
             print(f"\nJob Application Helper: {reply}\n")
             messages.append({"role": "assistant", "content": reply})
 
+            # Token tracking
+            total_token_usage += reply_obj.usage.total_tokens
+            print(f"[Token Tracker] Total tokens used so far: {total_token_usage}")
+
+            # Optional warning threshold
+            if total_token_usage > 2000:
+                print("[Warning] You have exceeded 2,000 tokens. Consider starting a new session.")
+
             # TEMPORARY: uncomment while testing memory
-            print("DEBUG message count:", len(messages))
+            # print("DEBUG message count:", len(messages))
 
 # --- Task 6: Ethics Reflection ---
 
