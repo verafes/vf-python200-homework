@@ -1,11 +1,11 @@
 # project_06.py — Week 6 Mini Project
 
 import os
-import string
 from pathlib import Path
 
 from dotenv import load_dotenv
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
+from warmup_06 import simple_keyword_retrieval
 
 
 # --- Step 1: Setup ---
@@ -42,6 +42,7 @@ query_engine = index.as_query_engine(similarity_top_k=3)
 
 print("Index built successfully. Ready to answer questions.\n")
 
+
 # --- Step 4: Query the Assistant ---
 print("\n--- Step 4 ---")
 questions = [
@@ -60,7 +61,7 @@ for q in questions:
     response = query_engine.query(q)
     print("Answer:")
     #  answer text
-    print(response)
+    print(response.responce)
 
     # Top retrieved source node
     if response.source_nodes:
@@ -150,3 +151,56 @@ for i, sn in enumerate(failure_response.source_nodes[:3], start=1):
 # in the retrieved text or present guesses as facts. RAG reduces this risk but cannot eliminate it entirely,
 # which is why checking source nodes and designing for uncertainty are important.
 
+
+# --- Extension A: Side-by-Side Comparison (Moderate) ---
+# No new setup required. use existing settings and helpers
+
+# read all text files
+documents_text = {f.name: f.read_text() for f in docs_dir.glob("*.txt")}
+
+def compare_keyword_vs_semantic_rag():
+    print("\n--- Extension A: Side-by-Side Comparison ---")
+    for q in questions:
+        # --- Keyword RAG ---
+        kw_result = simple_keyword_retrieval(q, documents_text, verbose=False)
+        kw_doc, kw_content = kw_result[0]
+        kw_preview = " ".join(kw_content[:300].split())
+
+        print("KEYWORD RAG")
+        print(f"Retrieved Document: {kw_doc}")
+        print(f"Answer Preview: {kw_preview}\n")
+
+        # --- Semantic RAG ---
+        sem_response = query_engine.query(q)
+        sem_answer = sem_response.response
+        sem_doc = sem_response.source_nodes[0].node.metadata.get("file_name")
+
+        print("SEMANTIC RAG (LlamaIndex)")
+        print(f"Retrieved Document: {sem_doc}")
+        print(f"Answer: {sem_answer}\n")
+
+# --- Extension A Reflections (Concise Version) ---
+# - Did keyword RAG retrieve the right document?
+# - How did the answer quality differ?
+# - Did keyword RAG match semantic RAG or fail?
+
+# 1. Hours on weekends: Keyword RAG failed (retrieved wholesale_catering.txt),
+# while Semantic RAG correctly retrieved faq.txt.
+# This shows keyword RAG cannot interpret meaning and may match irrelevant tokens.
+
+# 2. Dairy-free options: Keyword RAG partially relevant (retrieved menu.txt),
+# Semantic RAG retrieved seasonal_specials.txt with a more accurate answer.
+# Keyword RAG cannot distinguish dairy vs non-dairy; semantic RAG understands intent.
+
+# 3. Loyalty program: both systems retrieved faq.txt.
+# Keyword RAG works because the query used exact words found in the document.
+
+# 4. Origin story: both retrieved our_story.txt.
+# Strong keyword overlap helped keyword retrieval succeed.
+
+# 5. Catering/wholesale — both retrieved wholesale_catering.txt.
+# Exact keyword matches made retrieval straightforward for both approaches.
+
+# Summary:
+# Keyword RAG only works when the query contains exact words from the document.
+# Semantic RAG performs better overall because it retrieves based on meaning, not only exact token overlap.

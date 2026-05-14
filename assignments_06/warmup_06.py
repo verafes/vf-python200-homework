@@ -125,328 +125,331 @@ def simple_keyword_retrieval(query, documents, verbose=True):
             print("\nNo overlapping keywords found.")
         return [("None found", "No relevant content.")]
 
+def run_warmup():
+    # --- Keyword RAG  ---
 
-# --- Keyword RAG  ---
+    # Keyword RAG Q1:
+    print("\n--- Keyword Q1 ---")
 
-# Keyword RAG Q1:
-print("\n--- Keyword Q1 ---")
+    query = "What are your hours on the weekend?"
 
-query = "What are your hours on the weekend?"
+    documents = {
+        "menu.txt": "We serve espresso, lattes, cappuccinos, and cold brew. Pastries include croissants and muffins baked fresh daily. Oat milk and almond milk are available.",
+        "hours.txt": "We are open Monday through Friday from 7am to 7pm. On weekends we open at 8am and close at 5pm. We are closed on Thanksgiving and Christmas Day.",
+        "hiring.txt": "We are currently hiring baristas and shift supervisors. Send your resume to jobs@groundworkcoffee.com.",
+        "loyalty.txt": "Join our loyalty program to earn one point per dollar spent. Redeem 100 points for a free drink of your choice.",
+    }
 
-documents = {
-    "menu.txt": "We serve espresso, lattes, cappuccinos, and cold brew. Pastries include croissants and muffins baked fresh daily. Oat milk and almond milk are available.",
-    "hours.txt": "We are open Monday through Friday from 7am to 7pm. On weekends we open at 8am and close at 5pm. We are closed on Thanksgiving and Christmas Day.",
-    "hiring.txt": "We are currently hiring baristas and shift supervisors. Send your resume to jobs@groundworkcoffee.com.",
-    "loyalty.txt": "Join our loyalty program to earn one point per dollar spent. Redeem 100 points for a free drink of your choice.",
-}
+    results = simple_keyword_retrieval(query, documents, verbose=True)
+    best_name, best_content = results[0]
+    print("Selected document:", best_name)
 
-results = simple_keyword_retrieval(query, documents, verbose=True)
-best_name, best_content = results[0]
-print("Selected document:", best_name)
-
-# Q1: The selected document was "loyalty.txt". Keyword retrieval got this wrong.
-# The correct answer should be "hours.txt", but keyword RAG only matches exact tokens.
-# The query contained "your", and both hiring.txt and loyalty.txt contain "your",
-# while hours.txt does not contain exact matches for "hours" or "weekend".
-# Because of this, the algorithm incorrectly selected loyalty.txt.
-# his shows a limitation of simple keyword matching.
-
-
-# Keyword RAG - Q2
-print("\n--- Keyword Q2 ---")
-
-query = "Do you have anything without caffeine?"
-
-results = simple_keyword_retrieval(query, documents, verbose=True)
-best_name, best_content = results[0]
-print("Selected document:", best_name)
-
-# Keyword retrieval returned "None found" because none of the documents contain
-# the exact words "caffeine" or "without".
-# Keyword RAG fails here because it cannot understand the concept of "caffeine-free" or "decaf".
-# A semantic / embedding-based retrieval system would do better because it understands meaning,
-# not just exact word matches.
+    # Q1: The selected document was "loyalty.txt". Keyword retrieval got this wrong.
+    # The correct answer should be "hours.txt", but keyword RAG only matches exact tokens.
+    # The query contained "your", and both hiring.txt and loyalty.txt contain "your",
+    # while hours.txt does not contain exact matches for "hours" or "weekend".
+    # Because of this, the algorithm incorrectly selected loyalty.txt.
+    # his shows a limitation of simple keyword matching.
 
 
-# Keyword RAG - Q3
-print("\n--- Keyword Q3 ---")
+    # Keyword RAG - Q2
+    print("\n--- Keyword Q2 ---")
 
-query = "How do I sign up for rewards?"
+    query = "Do you have anything without caffeine?"
 
-# Prediction (before running):
-# I predict the selected document will be "loyalty.txt" because it talks about a loyalty program,
-# earning points, and redeeming rewards, which is conceptually closest to "sign up for rewards".
+    results = simple_keyword_retrieval(query, documents, verbose=True)
+    best_name, best_content = results[0]
+    print("Selected document:", best_name)
 
-results = simple_keyword_retrieval(query, documents, verbose=True)
-best_name, best_content = results[0]
-print("Selected document:", best_name)
-
-# After running:
-# I expected "loyalty.txt" to be selected. Actual result: "None found".
-# My prediction was incorrect. Keyword RAG only matches exact tokens, and none of the documents contain
-# "rewards", "sign", or "up". Even though loyalty.txt is the correct semantic match,
-# keyword retrieval cannot understand that "rewards" relates to "loyalty program".
-# This demonstrates another limitation of keyword-based retrieval.
+    # Keyword retrieval returned "None found" because none of the documents contain
+    # the exact words "caffeine" or "without".
+    # Keyword RAG fails here because it cannot understand the concept of "caffeine-free" or "decaf".
+    # A semantic / embedding-based retrieval system would do better because it understands meaning,
+    # not just exact word matches.
 
 
-# --- Semantic RAG Concepts ---
+    # Keyword RAG - Q3
+    print("\n--- Keyword Q3 ---")
 
-#  Semantic Question 1
-# What is a vector embedding?
-# A vector embedding is a list of numbers that represents the meaning of a piece of text.
-# so that similar ideas end up close together in vector space even if they use different words.
+    query = "How do I sign up for rewards?"
 
-# If one chunk has cosine similarity of 0.85 and another has 0.30, the 0.85 chunk is more relevant.
-# Higher cosine score means the two pieces of text point in a similar direction, so their meaning is closer.
-#
-# Semantic search can find the right chunk even without matching words because it compares meaning,
-# not exact text. It understands that different words can still express the same idea and that
-# "loyalty program" can match a query about "rewards" even if the words differ.
+    # Prediction (before running):
+    # I predict the selected document will be "loyalty.txt" because it talks about a loyalty program,
+    # earning points, and redeeming rewards, which is conceptually closest to "sign up for rewards".
 
+    results = simple_keyword_retrieval(query, documents, verbose=True)
+    best_name, best_content = results[0]
+    print("Selected document:", best_name)
 
-# Semantic Question 2
-# | Feature                    | Keyword RAG                     | Semantic RAG                               |
-# |----------------------------|---------------------------------|--------------------------------------------|
-# | What is compared?          | Exact word overlap              | Vector embeddings (semantic meaning)       |
-# | What is retrieved?         | Full document                   | Most relevant (similar) chunks             |
-# | Can it handle synonyms?    | No                              | Yes                                        |
-# | Storage format             | Plain text dictionary           | Embedding vectors stored in an index       |
-# | Relevance score            | Number of overlapping keywords  | Cosine similarity (how close meanings are) |
+    # After running:
+    # I expected "loyalty.txt" to be selected. Actual result: "None found".
+    # My prediction was incorrect. Keyword RAG only matches exact tokens, and none of the documents contain
+    # "rewards", "sign", or "up". Even though loyalty.txt is the correct semantic match,
+    # keyword retrieval cannot understand that "rewards" relates to "loyalty program".
+    # This demonstrates another limitation of keyword-based retrieval.
 
 
-# --- LlamaIndex  ---
+    # --- Semantic RAG Concepts ---
 
-# setup
-Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
-# load BrightLeaf documents
+    #  Semantic Question 1
+    # What is a vector embedding?
+    # A vector embedding is a list of numbers that represents the meaning of a piece of text.
+    # so that similar ideas end up close together in vector space even if they use different words.
 
-docs = SimpleDirectoryReader(PDF_DIR).load_data()
-print(f"\nLoaded {len(docs)} documents.")
+    # If one chunk has cosine similarity of 0.85 and another has 0.30, the 0.85 chunk is more relevant.
+    # Higher cosine score means the two pieces of text point in a similar direction, so their meaning is closer.
+    #
+    # Semantic search can find the right chunk even without matching words because it compares meaning,
+    # not exact text. It understands that different words can still express the same idea and that
+    # "loyalty program" can match a query about "rewards" even if the words differ.
 
-index = VectorStoreIndex.from_documents(docs)
 
-# LlamaIndex Question 1 - baseline retrieval test
-def q1_run_retrieval_baseline():
-    print("\n--- LlamaIndex Q1: Retrieval Baseline ---")
-    # Default query engine
-    query_engine = index.as_query_engine(similarity_top_k=3)
+    # Semantic Question 2
+    # | Feature                    | Keyword RAG                     | Semantic RAG                               |
+    # |----------------------------|---------------------------------|--------------------------------------------|
+    # | What is compared?          | Exact word overlap              | Vector embeddings (semantic meaning)       |
+    # | What is retrieved?         | Full document                   | Most relevant (similar) chunks             |
+    # | Can it handle synonyms?    | No                              | Yes                                        |
+    # | Storage format             | Plain text dictionary           | Embedding vectors stored in an index       |
+    # | Relevance score            | Number of overlapping keywords  | Cosine similarity (how close meanings are) |
 
-    questions = [
-        "What employee benefits does BrightLeaf offer?",
-        "What are BrightLeaf's security policies?",
-    ]
 
-    for q in questions:
-        print(f"\nQUESTION: {q}")
+    # --- LlamaIndex  ---
+
+    # setup
+    Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
+    # load BrightLeaf documents
+
+    docs = SimpleDirectoryReader(PDF_DIR).load_data()
+    print(f"\nLoaded {len(docs)} documents.")
+
+    index = VectorStoreIndex.from_documents(docs)
+
+    # LlamaIndex Question 1 - baseline retrieval test
+    def q1_run_retrieval_baseline():
+        print("\n--- LlamaIndex Q1: Retrieval Baseline ---")
+        # Default query engine
+        query_engine = index.as_query_engine(similarity_top_k=3)
+
+        questions = [
+            "What employee benefits does BrightLeaf offer?",
+            "What are BrightLeaf's security policies?",
+        ]
+
+        for q in questions:
+            print(f"\nQUESTION: {q}")
+            response = query_engine.query(q)
+            print(f"ANSWER: {response}")
+
+            retrieved = query_engine.retrieve(q)
+            for node in retrieved:
+                print(f"\nScore: {node.score}")
+                print(node.text[:150])
+
+    # Run baseline retrieval test
+    q1_run_retrieval_baseline()
+
+    # LlamaIndex Q1: observations
+    # Query 1: "What employee benefits does BrightLeaf offer?"
+    # - Retrieved chunks: The chunks mostly look like PDF boilerplate or binary-like garbage
+    #   (e.g., %PDF-1.4 headers and random symbols), not readable policy or HR text.
+    #   They do NOT look relevant to employee benefits.
+    # - Model answer tone: The answer sounds confident and generic (health insurance, retirement, PTO),
+    #   but it does not cite any specific details from the documents and is clearly hallucinated.
+    # - Unexpected behavior: It was surprising that the "best" chunks were unreadable PDF fragments
+    #   instead of meaningful text, which shows that the index is built over low-quality extracted content.
+
+    # Query 2: "What are BrightLeaf's security policies?"
+    # - Retrieved chunks: Again, the chunks are mostly PDF headers and random characters, not clear
+    #   descriptions of security policies. They do NOT look relevant to security at all.
+    # - Model answer tone: The answer is vague and just says the policies are "outlined in the PDF,"
+    #   which sounds generic and not grounded in any specific policy language.
+    # - Unexpected behavior: The system retrieved more PDF-structure garbage instead of real policy text,
+    #   and the model still tried to answer, which highlights how easily it can sound confident
+    #   even when the retrieved context is useless.
+
+
+    # LlamaIndex Question 2: Compare similarity_top_k
+    def q2_compare_similarity_top_k():
+        print("\n--- LlamaIndex Q2 --- ")
+
+        q = "What employee benefits does BrightLeaf offer?"
+
+        # k = 1
+        query_engine_k1 = index.as_query_engine(similarity_top_k=1)
+        response_k1 = query_engine_k1.query(q)
+
+        print("\n### k = 1 ###")
+        print("ANSWER:", response_k1)
+
+        for node in query_engine_k1.retrieve(q):
+            print(f"\nScore: {node.score}")
+            print(node.text[:150])
+
+        # k = 5
+        query_engine_k5 = index.as_query_engine(similarity_top_k=5)
+        response_k5 = query_engine_k5.query(q)
+
+        print("\n### k = 5 ###")
+        print(f"ANSWER: {response_k5}")
+
+        for node in query_engine_k5.retrieve(q):
+            print(f"\nScore: {node.score}")
+            print(node.text[:150])
+
+    # Run Q2 compare similarity_top_k
+    q2_compare_similarity_top_k()
+
+    # LlamaIndex Q2: observations
+    # With similarity_top_k=1:
+    # - Only one chunk was retrieved, and it was unreadable PDF garbage.
+    # - The model responded that the benefits were "not specified," which is correct given the lack of context.
+    # - This shows that with minimal context, the model avoids hallucinating.
+
+    # With similarity_top_k=5:
+    # - Five chunks were retrieved, but they were still unreadable PDF fragments.
+    # - The answer did not improve or become more detailed.
+    # - Increasing k only added more noise, not more useful information.
+
+    # Conclusion:
+    # - More retrieved context is NOT always better.
+    # - When the underlying documents contain no readable text, increasing similarity_top_k
+    #   does not improve grounding or accuracy.
+    # - Q2 demonstrates that retrieval quality matters more than retrieval quantity.
+
+
+    # LlamaIndex Question 3:
+    def q3_test_hard_query():
+        print("\n--- LlamaIndex Q3 ---")
+
+        q = "What is BrightLeaf’s long-term global expansion strategy?"
+
+        # Use same index, same embedding model
+        query_engine = index.as_query_engine(similarity_top_k=5)
+
         response = query_engine.query(q)
+        print(f"\nQUESTION: {q}" )
         print(f"ANSWER: {response}")
 
+        print("\nRetrieved Chunks:")
         retrieved = query_engine.retrieve(q)
         for node in retrieved:
             print(f"\nScore: {node.score}")
             print(node.text[:150])
 
-# Run baseline retrieval test
-q1_run_retrieval_baseline()
+    # Run Q3 Hard / Vague Query test
+    q3_test_hard_query()
 
-# LlamaIndex Q1: observations
-# Query 1: "What employee benefits does BrightLeaf offer?"
-# - Retrieved chunks: The chunks mostly look like PDF boilerplate or binary-like garbage
-#   (e.g., %PDF-1.4 headers and random symbols), not readable policy or HR text.
-#   They do NOT look relevant to employee benefits.
-# - Model answer tone: The answer sounds confident and generic (health insurance, retirement, PTO),
-#   but it does not cite any specific details from the documents and is clearly hallucinated.
-# - Unexpected behavior: It was surprising that the "best" chunks were unreadable PDF fragments
-#   instead of meaningful text, which shows that the index is built over low-quality extracted content.
+    # LlamaIndex Question 3: observations
+    # I chose a vague, high-level question that the documents are unlikely to answer:
+    # "What is BrightLeaf’s long-term global expansion strategy?"
 
-# Query 2: "What are BrightLeaf's security policies?"
-# - Retrieved chunks: Again, the chunks are mostly PDF headers and random characters, not clear
-#   descriptions of security policies. They do NOT look relevant to security at all.
-# - Model answer tone: The answer is vague and just says the policies are "outlined in the PDF,"
-#   which sounds generic and not grounded in any specific policy language.
-# - Unexpected behavior: The system retrieved more PDF-structure garbage instead of real policy text,
-#   and the model still tried to answer, which highlights how easily it can sound confident
-#   even when the retrieved context is useless.
+    # What I expected:
+    # - the model to struggle because the BrightLeaf PDFs contain almost no readable text.
+    # - the retrieved chunks to be irrelevant or unreadable.
+    # - the model to produce a generic answer or admit that the information was not present.
 
+    # What actually happened:
+    # - The retrieved chunks were all unreadable PDF fragments (binary garbage, %PDF headers, random symbols).
+    # - The model responded with a generic statement that the information was not explicitly mentioned.
+    # - The answer was not grounded in any document content, because the retrieved chunks contained no usable text.
 
-# LlamaIndex Question 2: Compare similarity_top_k
-def q2_compare_similarity_top_k():
-    print("\n--- LlamaIndex Q2 --- ")
+    # What I would change to handle this kind of query better:
+    # - Use OCR or a better PDF text extractor so the documents contain real text.
+    # - Add document summaries or metadata to improve retrieval quality.
+    # - Add "no-answer" detection step so the model can explicitly say when the information is not present.
+    # - Use hybrid search (BM25 + embeddings) or a reranker to reduce garbage retrieval.
 
-    q = "What employee benefits does BrightLeaf offer?"
-
-    # k = 1
-    query_engine_k1 = index.as_query_engine(similarity_top_k=1)
-    response_k1 = query_engine_k1.query(q)
-
-    print("\n### k = 1 ###")
-    print("ANSWER:", response_k1)
-
-    for node in query_engine_k1.retrieve(q):
-        print(f"\nScore: {node.score}")
-        print(node.text[:150])
-
-    # k = 5
-    query_engine_k5 = index.as_query_engine(similarity_top_k=5)
-    response_k5 = query_engine_k5.query(q)
-
-    print("\n### k = 5 ###")
-    print(f"ANSWER: {response_k5}")
-
-    for node in query_engine_k5.retrieve(q):
-        print(f"\nScore: {node.score}")
-        print(node.text[:150])
-
-# Run Q2 compare similarity_top_k
-q2_compare_similarity_top_k()
-
-# LlamaIndex Q2: observations
-# With similarity_top_k=1:
-# - Only one chunk was retrieved, and it was unreadable PDF garbage.
-# - The model responded that the benefits were "not specified," which is correct given the lack of context.
-# - This shows that with minimal context, the model avoids hallucinating.
-
-# With similarity_top_k=5:
-# - Five chunks were retrieved, but they were still unreadable PDF fragments.
-# - The answer did not improve or become more detailed.
-# - Increasing k only added more noise, not more useful information.
-
-# Conclusion:
-# - More retrieved context is NOT always better.
-# - When the underlying documents contain no readable text, increasing similarity_top_k
-#   does not improve grounding or accuracy.
-# - Q2 demonstrates that retrieval quality matters more than retrieval quantity.
+    # Overall, this question shows that when the underlying documents contain no usable text,
+    # the retrieval pipeline cannot provide meaningful grounding, and the model falls back to generic answers.
 
 
-# LlamaIndex Question 3:
-def q3_test_hard_query():
-    print("\n--- LlamaIndex Q3 ---")
+    # LlamaIndex Q4: Evaluating Responses
+    def q4_evaluate_responses():
+        print("\n--- LlamaIndex Q4 ---")
 
-    q = "What is BrightLeaf’s long-term global expansion strategy?"
+        from llama_index.core.evaluation import FaithfulnessEvaluator, RelevancyEvaluator
+        from llama_index.llms.openai import OpenAI
 
-    # Use same index, same embedding model
-    query_engine = index.as_query_engine(similarity_top_k=5)
+        judge_llm = OpenAI(model="gpt-4o-mini")
 
-    response = query_engine.query(q)
-    print(f"\nQUESTION: {q}" )
-    print(f"ANSWER: {response}")
+        faithfulness = FaithfulnessEvaluator(llm=judge_llm)
+        relevancy = RelevancyEvaluator(llm=judge_llm)
 
-    print("\nRetrieved Chunks:")
-    retrieved = query_engine.retrieve(q)
-    for node in retrieved:
-        print(f"\nScore: {node.score}")
-        print(node.text[:150])
+        # Query 1 (same as Q1)
+        q1 = "What employee benefits does BrightLeaf offer?"
+        query_engine = index.as_query_engine(similarity_top_k=3)
+        response1 = query_engine.query(q1)
 
-# Run Q3 Hard / Vague Query test
-q3_test_hard_query()
+        print(f"\nQUESTION 1: {q1}")
+        print(f"ANSWER: {response1}")
 
-# LlamaIndex Question 3: observations
-# I chose a vague, high-level question that the documents are unlikely to answer:
-# "What is BrightLeaf’s long-term global expansion strategy?"
+        f1 = faithfulness.evaluate(
+            query=q1,
+            response=str(response1),
+            contexts=[n.text for n in query_engine.retrieve(q1)]
+        )
+        r1 = relevancy.evaluate(
+            query=q1,
+            response=str(response1),
+            contexts=[n.text for n in query_engine.retrieve(q1)]
+        )
 
-# What I expected:
-# - the model to struggle because the BrightLeaf PDFs contain almost no readable text.
-# - the retrieved chunks to be irrelevant or unreadable.
-# - the model to produce a generic answer or admit that the information was not present.
+        print(f"Faithfulness Score: {f1.score}")
+        print(f"Relevancy Score: {r1.score}")
 
-# What actually happened:
-# - The retrieved chunks were all unreadable PDF fragments (binary garbage, %PDF headers, random symbols).
-# - The model responded with a generic statement that the information was not explicitly mentioned.
-# - The answer was not grounded in any document content, because the retrieved chunks contained no usable text.
+        # Query 2 (intentionally low-quality)
+        q2 = "What is BrightLeaf’s long-term global expansion strategy?"
+        response2 = query_engine.query(q2)
 
-# What I would change to handle this kind of query better:
-# - Use OCR or a better PDF text extractor so the documents contain real text.
-# - Add document summaries or metadata to improve retrieval quality.
-# - Add "no-answer" detection step so the model can explicitly say when the information is not present.
-# - Use hybrid search (BM25 + embeddings) or a reranker to reduce garbage retrieval.
+        print(f"\nQUESTION 2: {q2}")
+        print(f"ANSWER: {response2}", )
 
-# Overall, this question shows that when the underlying documents contain no usable text,
-# the retrieval pipeline cannot provide meaningful grounding, and the model falls back to generic answers.
+        f2 = faithfulness.evaluate(
+            query=q2,
+            response=str(response2),
+            contexts=[n.text for n in query_engine.retrieve(q2)]
+        )
+        r2 = relevancy.evaluate(
+            query=q2,
+            response=str(response2),
+            contexts=[n.text for n in query_engine.retrieve(q2)]
+        )
 
+        print(f"Faithfulness Score: {f2.score}")
+        print(f"Relevancy Score: {r2.score}")
 
-# LlamaIndex Q4: Evaluating Responses
-def q4_evaluate_responses():
-    print("\n--- LlamaIndex Q4 ---")
+    # Run Q4 Evaluating Responses
+    q4_evaluate_responses()
 
-    from llama_index.core.evaluation import FaithfulnessEvaluator, RelevancyEvaluator
-    from llama_index.llms.openai import OpenAI
+    # --- LlamaIndex Question 4: observations ---
+    # 1. What does a faithfulness score of 1.0 mean? What would a score of 0.0 indicate?
+    # - A faithfulness score of 1.0 means the model’s answer is fully grounded in the retrieved context
+    # and does not introduce any hallucinated details.
+    # - A score of 0.0 means the answer is not grounded at all. The model is adding information that
+    # does NOT appear in the retrieved chunks.
 
-    judge_llm = OpenAI(model="gpt-4o-mini")
+    # In my results:
+    # - The Q1 answer scored 0.0 because the model hallucinated specific benefits (health insurance,
+    # retirement plans, PTO) even though the retrieved chunks were unreadable PDF garbage.
+    # - The vague Q2 answer scored 1.0 because the model simply said the information was not present,
+    # which *was* faithful to the (empty) context.
 
-    faithfulness = FaithfulnessEvaluator(llm=judge_llm)
-    relevancy = RelevancyEvaluator(llm=judge_llm)
+    # 2. What does a relevancy score measure, and how is it different from faithfulness?
+    # - Relevancy measures whether the model’s answer actually addresses the user’s question.
+    # - Faithfulness measures whether the answer is supported by the retrieved documents.
+    # - These are different: an answer can be relevant but unfaithful (on-topic but hallucinated),
+    # or faithful but irrelevant (grounded in context but not answering the question).
 
-    # Query 1 (same as Q1)
-    q1 = "What employee benefits does BrightLeaf offer?"
-    query_engine = index.as_query_engine(similarity_top_k=3)
-    response1 = query_engine.query(q1)
+    # In my results:
+    # - The Q1 answer was relevant in topic but ungrounded, so relevancy was still 0.0.
+    # - The Q2 answer (“not explicitly mentioned”) was both faithful AND relevant, so relevancy was 1.0.
 
-    print(f"\nQUESTION 1: {q1}")
-    print(f"ANSWER: {response1}")
+    # 3. Did the scores change between the two queries? Why?
+    # - Yes. The first query scored 0.0 for both metrics because the model hallucinated details that
+    # were not in the retrieved chunks.
+    # - The second query scored 1.0 for both metrics because the model correctly stated that the
+    # information was not present, which is both faithful and relevant given the garbage context
 
-    f1 = faithfulness.evaluate(
-        query=q1,
-        response=str(response1),
-        contexts=[n.text for n in query_engine.retrieve(q1)]
-    )
-    r1 = relevancy.evaluate(
-        query=q1,
-        response=str(response1),
-        contexts=[n.text for n in query_engine.retrieve(q1)]
-    )
-
-    print(f"Faithfulness Score: {f1.score}")
-    print(f"Relevancy Score: {r1.score}")
-
-    # Query 2 (intentionally low-quality)
-    q2 = "What is BrightLeaf’s long-term global expansion strategy?"
-    response2 = query_engine.query(q2)
-
-    print(f"\nQUESTION 2: {q2}")
-    print(f"ANSWER: {response2}", )
-
-    f2 = faithfulness.evaluate(
-        query=q2,
-        response=str(response2),
-        contexts=[n.text for n in query_engine.retrieve(q2)]
-    )
-    r2 = relevancy.evaluate(
-        query=q2,
-        response=str(response2),
-        contexts=[n.text for n in query_engine.retrieve(q2)]
-    )
-
-    print(f"Faithfulness Score: {f2.score}")
-    print(f"Relevancy Score: {r2.score}")
-
-# Run Q4 Evaluating Responses
-q4_evaluate_responses()
-
-# --- LlamaIndex Question 4: observations ---
-# 1. What does a faithfulness score of 1.0 mean? What would a score of 0.0 indicate?
-# - A faithfulness score of 1.0 means the model’s answer is fully grounded in the retrieved context
-# and does not introduce any hallucinated details.
-# - A score of 0.0 means the answer is not grounded at all. The model is adding information that
-# does NOT appear in the retrieved chunks.
-
-# In my results:
-# - The Q1 answer scored 0.0 because the model hallucinated specific benefits (health insurance,
-# retirement plans, PTO) even though the retrieved chunks were unreadable PDF garbage.
-# - The vague Q2 answer scored 1.0 because the model simply said the information was not present,
-# which *was* faithful to the (empty) context.
-
-# 2. What does a relevancy score measure, and how is it different from faithfulness?
-# - Relevancy measures whether the model’s answer actually addresses the user’s question.
-# - Faithfulness measures whether the answer is supported by the retrieved documents.
-# - These are different: an answer can be relevant but unfaithful (on-topic but hallucinated),
-# or faithful but irrelevant (grounded in context but not answering the question).
-
-# In my results:
-# - The Q1 answer was relevant in topic but ungrounded, so relevancy was still 0.0.
-# - The Q2 answer (“not explicitly mentioned”) was both faithful AND relevant, so relevancy was 1.0.
-
-# 3. Did the scores change between the two queries? Why?
-# - Yes. The first query scored 0.0 for both metrics because the model hallucinated details that
-# were not in the retrieved chunks.
-# - The second query scored 1.0 for both metrics because the model correctly stated that the
-# information was not present, which is both faithful and relevant given the garbage context
+if __name__ == "__main__":
+    run_warmup()
