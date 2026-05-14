@@ -61,7 +61,7 @@ for q in questions:
     response = query_engine.query(q)
     print("Answer:")
     #  answer text
-    print(response.responce)
+    print(response.response)
 
     # Top retrieved source node
     if response.source_nodes:
