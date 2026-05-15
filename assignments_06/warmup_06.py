@@ -6,6 +6,12 @@ import string
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.core import Settings
+from llama_index.core import Document
+
+import logging
+logging.getLogger("pypdf").setLevel(logging.CRITICAL)
+
+from pypdf import PdfReader
 
 from dotenv import load_dotenv
 
@@ -16,7 +22,6 @@ else:
     print("Warning: could not load API key. Check your .env file.")
 
 
-# os.makedirs("outputs", exist_ok=True)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PDF_DIR = os.path.join(BASE_DIR, "resources", "brightleaf_pdfs")
 
@@ -215,14 +220,42 @@ print("Selected document:", best_name)
 
 
 # --- LlamaIndex  ---
+print("\n--- LlamaIndex  ---")
+
+# helper
+def extract_text_from_pdf(pdf_path):
+    """Extract readable text from a PDF using pypdf."""
+    reader = PdfReader(pdf_path)
+    text = []
+    for page in reader.pages:
+        page_text = page.extract_text()
+        if page_text:
+            text.append(page_text.strip())
+    return "\n".join(text)
 
 # setup
 Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
 # load BrightLeaf documents
+# docs = SimpleDirectoryReader(PDF_DIR).load_data()
+def load_pdfs_custom(pdf_dir):
+    """Load ALL PDFs from PDF_DIR using the custom extractor."""
+    pdf_files = [os.path.join(PDF_DIR, f) for f in os.listdir(pdf_dir)]
+    if not pdf_files:
+        raise FileNotFoundError(f"No PDFs found in {pdf_dir}.")
 
-docs = SimpleDirectoryReader(PDF_DIR).load_data()
-print(f"\nLoaded {len(docs)} documents.")
+    # Extract text from each PDF
+    docs = [
+        Document(
+            text=extract_text_from_pdf(f),
+            metadata={"filename": os.path.basename(f)}
+        )
+        for f in pdf_files
+    ]
 
+    return docs
+
+docs = load_pdfs_custom(PDF_DIR)
+print(f"Loaded {len(docs)} BrightLeaf PDF(s).")
 index = VectorStoreIndex.from_documents(docs)
 
 # LlamaIndex Question 1 - baseline retrieval test
@@ -248,22 +281,22 @@ def q1_run_retrieval_baseline():
 
 # LlamaIndex Q1: observations
 # Query 1: "What employee benefits does BrightLeaf offer?"
-# - Retrieved chunks: The chunks mostly look like PDF boilerplate or binary-like garbage
-#   (e.g., %PDF-1.4 headers and random symbols), not readable policy or HR text.
-#   They do NOT look relevant to employee benefits.
-# - Model answer tone: The answer sounds confident and generic (health insurance, retirement, PTO),
-#   but it does not cite any specific details from the documents and is clearly hallucinated.
-# - Unexpected behavior: It was surprising that the "best" chunks were unreadable PDF fragments
-#   instead of meaningful text, which shows that the index is built over low-quality extracted content.
+# The retrieved chunks for this question were readable and contained actual policy text,
+# including sections such as “Introduction,” “Overview,” and descriptions of the benefits program.
+# Unlike earlier attempts where the PDFs produced only binary garbage (with SimpleDirectoryReader(PDF_DIR).load_data()),
+# the new extraction pipeline successfully returned meaningful content.
+# The model’s answer was detailed and aligned with the retrieved text, accurately summarizing health,
+# vision, wellness, financial, retirement, parental leave, and professional development benefits.
+# The tone was confident, but this time the confidence was justified because the answer
+# reflected the content of the retrieved chunks rather than hallucinating details.
 
 # Query 2: "What are BrightLeaf's security policies?"
-# - Retrieved chunks: Again, the chunks are mostly PDF headers and random characters, not clear
-#   descriptions of security policies. They do NOT look relevant to security at all.
-# - Model answer tone: The answer is vague and just says the policies are "outlined in the PDF,"
-#   which sounds generic and not grounded in any specific policy language.
-# - Unexpected behavior: The system retrieved more PDF-structure garbage instead of real policy text,
-#   and the model still tried to answer, which highlights how easily it can sound confident
-#   even when the retrieved context is useless.
+# The retrieved chunks contained readable text, including a section titled "Network and Data Security,"
+# which directly addressed the question. The model’s answer accurately summarized the layered security controls
+# described in the document, including MFA, VPN requirements, credential rotation, encryption standards,
+# firewalls, logging, incident response, and vendor security practices.
+# The tone was authoritative, but unlike earlier runs, the answer was grounded in the retrieved content.
+# The system behaved as expected: retrieval provided relevant text, and the model produced a faithful summary.
 
 
 # LlamaIndex Question 2: Compare similarity_top_k
@@ -297,20 +330,29 @@ def q2_compare_similarity_top_k():
 
 # LlamaIndex Q2: observations
 # With similarity_top_k=1:
-# - Only one chunk was retrieved, and it was unreadable PDF garbage.
-# - The model responded that the benefits were "not specified," which is correct given the lack of context.
-# - This shows that with minimal context, the model avoids hallucinating.
+# Only one chunk was retrieved from the "Introduction" section of the BrightLeaf documents
+# that was directly relevant to employee benefits.
+# Even though the chunk did not explicitly list employee benefits,
+# the model still produced a confident and detailed answer describing health insurance, retirement plans,
+# wellness programs, and professional development.
+# This shows that even with minimal context, the model tends to infer or hallucinate
+# plausible-sounding details when the retrieved text is only loosely related to the question.
 
 # With similarity_top_k=5:
-# - Five chunks were retrieved, but they were still unreadable PDF fragments.
-# - The answer did not improve or become more detailed.
-# - Increasing k only added more noise, not more useful information.
+# Five chunks were retrieved, including sections on partnerships, company overview, and security.
+# Although these extra chunks were not directly related to employee benefits,
+# they did not degrade the model’s performance.
+# The response remained confident and detailed, but it was still largely inferred rather
+# than grounded in explicit statements from the documents.
+# This shows that increasing k added more context, but not more useful context.
 
 # Conclusion:
-# - More retrieved context is NOT always better.
-# - When the underlying documents contain no readable text, increasing similarity_top_k
-#   does not improve grounding or accuracy.
-# - Q2 demonstrates that retrieval quality matters more than retrieval quantity.
+# More retrieved context is NOT always better.
+# The comparison shows that retrieval quality matters more than retrieval quantity.
+# With clean, readable documents, both k=1 and k=5 produce grounded answers that sound authoritative
+# but rely heavily on inference. And increasing k does not meaningfully improve the response.
+# The model remains stable even when some retrieved chunks are only loosely related to the question.
+# Q2 demonstrates that retrieval quality matters more than retrieval quantity.
 
 
 # LlamaIndex Question 3:
@@ -337,23 +379,34 @@ def q3_test_hard_query():
 # "What is BrightLeaf’s long-term global expansion strategy?"
 
 # What I expected:
-# - the model to struggle because the BrightLeaf PDFs contain almost no readable text.
-# - the retrieved chunks to be irrelevant or unreadable.
+# - the model to struggle because the BrightLeaf PDFs focus on benefits, security, partnerships,
+# and company overview, none of which explicitly describe long‑term global expansion.
+# - the retrieved chunks to be only indirectly related to the question.
 # - the model to produce a generic answer or admit that the information was not present.
 
 # What actually happened:
-# - The retrieved chunks were all unreadable PDF fragments (binary garbage, %PDF headers, random symbols).
+# - the retrieved chunks included readable sections such as "Overview," "Introduction,"
 # - The model responded with a generic statement that the information was not explicitly mentioned.
 # - The answer was not grounded in any document content, because the retrieved chunks contained no usable text.
 
-# What I would change to handle this kind of query better:
-# - Use OCR or a better PDF text extractor so the documents contain real text.
-# - Add document summaries or metadata to improve retrieval quality.
-# - Add "no-answer" detection step so the model can explicitly say when the information is not present.
-# - Use hybrid search (BM25 + embeddings) or a reranker to reduce garbage retrieval.
+# The retrieved chunks included readable sections such as "Overview," "Introduction,"
+# and the EcoVolt partnership description.
+# Although none of these sections explicitly discussed global expansion,
+# they contained enough thematic content for the model to infer a plausible high‑level strategy.
+# The model produced a coherent answer describing collaboration with NGOs and expansion into emerging markets.
+# While the answer was not directly grounded in explicit statements from the documents,
+# it was consistent with the themes present in the retrieved text.
 
-# Overall, this question shows that when the underlying documents contain no usable text,
-# the retrieval pipeline cannot provide meaningful grounding, and the model falls back to generic answers.
+# What I would change to handle this kind of query better:
+# - Add document summaries or better metadata to improve retrieval quality.
+# - Add "no-answer" detection step so the model can explicitly say when the information is not present.
+# - Use hybrid search (BM25 + embeddings) or a reranker to help the system find the most relevant text
+# instead of relying on broad themes.
+
+# Overall, this question shows that even when the documents are readable,
+# the system still struggles with broad questions the PDFs don’t directly answer.
+# The model gives a smooth, reasonable reply, but it’s based on inference rather than facts
+# because the documents don’t contain the actual answer.
 
 
 # LlamaIndex Q4: Evaluating Responses
@@ -411,7 +464,7 @@ def q4_evaluate_responses():
     print(f"Faithfulness Score: {f2.score}")
     print(f"Relevancy Score: {r2.score}")
 
-# --- LlamaIndex Question 4: observations ---
+# LlamaIndex Question 4: observations
 # 1. What does a faithfulness score of 1.0 mean? What would a score of 0.0 indicate?
 # - A faithfulness score of 1.0 means the model’s answer is fully grounded in the retrieved context
 # and does not introduce any hallucinated details.
@@ -419,10 +472,9 @@ def q4_evaluate_responses():
 # does NOT appear in the retrieved chunks.
 
 # In my results:
-# - The Q1 answer scored 0.0 because the model hallucinated specific benefits (health insurance,
-# retirement plans, PTO) even though the retrieved chunks were unreadable PDF garbage.
-# - The vague Q2 answer scored 1.0 because the model simply said the information was not present,
-# which *was* faithful to the (empty) context.
+# Both questions received a faithfulness score of 1.0. This means the model’s answers
+# were fully aligned with the retrieved chunks. The documents were readable this time,
+# so the model could base its answers directly on the actual content instead of guessing.
 
 # 2. What does a relevancy score measure, and how is it different from faithfulness?
 # - Relevancy measures whether the model’s answer actually addresses the user’s question.
@@ -431,14 +483,14 @@ def q4_evaluate_responses():
 # or faithful but irrelevant (grounded in context but not answering the question).
 
 # In my results:
-# - The Q1 answer was relevant in topic but ungrounded, so relevancy was still 0.0.
-# - The Q2 answer (“not explicitly mentioned”) was both faithful AND relevant, so relevancy was 1.0.
+# - Both answers scored 1.0 for relevancy. This means the model stayed on-topic and directly answered the questions.
+# - Because the retrieved chunks were meaningful, the model could give answers that were both relevant and grounded.
 
 # 3. Did the scores change between the two queries? Why?
-# - Yes. The first query scored 0.0 for both metrics because the model hallucinated details that
-# were not in the retrieved chunks.
-# - The second query scored 1.0 for both metrics because the model correctly stated that the
-# information was not present, which is both faithful and relevant given the garbage context
+# No, both queries scored 1.0 for both metrics. The retrieved text was readable and
+# related to the questions, so the model had enough information to answer accurately.
+# This shows that when the documents are clean and the retrieval works well, the model
+# can produce answers that are both faithful and relevant.
 
 
 if __name__ == "__main__":
