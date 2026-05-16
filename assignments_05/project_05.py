@@ -23,7 +23,7 @@ def get_completion(messages, model="gpt-4o-mini", temperature=0.7):
         max_completion_tokens=400
     )
 
-    return response
+    return response.choices[0].message.content, response.usage.total_tokens
 
 
 # --- Task 1: Setup and System Prompt ---
@@ -68,7 +68,7 @@ experience, even if they are changing careers.
 # --- Task 2: Bullet Point Rewriter ---
 print("\n--- Task 2 ---")
 
-def rewrite_bullets(bullets: list[str]) -> list[dict]:
+def rewrite_bullets(bullets: list[str]) -> tuple[list[dict], int]:
     # Format the bullets into a delimited block
     bullet_text = "\n".join(f"- {b}" for b in bullets)
 
@@ -89,8 +89,7 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
     """
 
     messages = [{"role": "user", "content": prompt}]
-    response = get_completion(messages)
-    response_text = response.choices[0].message.content
+    response_text, tokens_used = get_completion(messages)
 
     clean_text = (
         response_text
@@ -112,7 +111,7 @@ def rewrite_bullets(bullets: list[str]) -> list[dict]:
         print(f"Original: {item['original']}")
         print(f"Improved: {item['improved']}\n")
 
-    return response_data
+    return response_data, tokens_used
 
 # Test Data
 bullets = [
@@ -146,7 +145,7 @@ rewrite_bullets(bullets)
 # --- Task 3: Cover Letter Generator ---
 print("\n--- Task 3 ---")
 
-def generate_cover_letter(job_title: str, background: str) -> str:
+def generate_cover_letter(job_title: str, background: str) -> tuple[str, int]:
     prompt = f"""
     You write strong cover letter opening paragraphs for career changers.
     The paragraph should be 3-5 sentences: 
@@ -180,7 +179,8 @@ def generate_cover_letter(job_title: str, background: str) -> str:
     """
 
     messages = [{"role": "user", "content": prompt}]
-    return get_completion(messages)
+    response = get_completion(messages)
+    return response
 
 job_title = "Junior Data Engineer"
 background = (
@@ -191,7 +191,7 @@ background = (
 
 result = generate_cover_letter(job_title, background)
 print(f"Cover letter for {job_title}:")
-print(result.choices[0].message.content)
+print(result)
 
 # I chose two examples in the prompt because they show strong career transitions
 # with clear connection between previous experience and new technical skills.
@@ -208,7 +208,7 @@ background_2 = (
 
 result = generate_cover_letter(job_title_2, background_2)
 print(f"\nCover letter for {job_title_2}:")
-print(result.choices[0].message.content)
+print(result)
 
 # My examples both follow the same pattern. So the model learned this template and reused it.
 # I need to update my prompt to force the model varied sentence structure so to not reuse the same rhythm.
@@ -262,6 +262,10 @@ print(f"Categories: {result.results[0].categories}")
 # language directed at a protected group as a whole. Safe descriptive examples of attacking speech
 # do not trigger the hate category, which is intentional to avoid false positives.
 
+def ask_next_step():
+    print("\nWhat would you like to do next?")
+    return input("You: ").strip()
+JOB_APP_NAME = "Job Application Helper"
 
 # --- Task 5: The Chatbot Loop ---
 print("\n--- Task 5 ---")
@@ -274,12 +278,13 @@ def run_chatbot():
     ]
 
     print("=" * 50)
-    print("Job Application Helper")
+    print(JOB_APP_NAME)
     print("=" * 50)
     print("I can help you with:")
     print("  1. Rewriting resume bullet points")
     print("  2. Drafting a cover letter opening")
     print("  3. Any other questions about your application")
+    print("You can type naturally.\n")
     print("\nType 'quit' at any time to exit.\n")
 
     while True:
@@ -287,7 +292,7 @@ def run_chatbot():
 
         # 2. Handle exit
         if user_input.lower() in {"quit", "exit"}:
-            print("\nJob Application Helper: Good luck with your applications!")
+            print(f"\n{JOB_APP_NAME}: Good luck with your applications!")
             break
 
         # 3. Skip empty input
@@ -309,7 +314,7 @@ def run_chatbot():
         # 5. Check if the user wants to rewrite bullets
         #    (hint: look for keywords like "bullet" or "resume" in user_input.lower())
         if "bullet" in user_input.lower() or "resume" in user_input.lower():
-            print("\nJob Application Helper: Paste your bullet points below, one per line.")
+            print(f"\n{JOB_APP_NAME}: Paste your bullet points below, one per line.")
             print("When you're done, type 'DONE' on its own line.\n")
             raw_bullets = []
             while True:
@@ -319,33 +324,34 @@ def run_chatbot():
                 if line:
                     raw_bullets.append(line)
 
-            reply_obj = rewrite_bullets(raw_bullets)
-            total_token_usage += reply_obj.usage.total_tokens
-            print(f"[Token Tracker] Total tokens used so far: {total_token_usage}")
+            bullets, tokens = rewrite_bullets(raw_bullets)
+            total_token_usage += tokens
+            print(f"[Token Tracker] Total tokens used so far: {total_token_usage}\n")
             continue
 
         # 6. Check if the user wants a cover letter
         elif "cover letter" in user_input.lower():
-            job_title = input("Job Application Helper: What is the job title? ").strip()
-            background = input("Job Application Helper: Briefly describe your background: ").strip()
-            cover_obj = generate_cover_letter(job_title, background)
-            cover = cover_obj.choices[0].message.content
+            job_title = input(f"\n{JOB_APP_NAME}: What is the job title? ").strip()
+            background = input(f"\n{JOB_APP_NAME}: Briefly describe your background: ").strip()
+            cover_text, tokens = generate_cover_letter(job_title, background)
+
             print("\nHere is a draft opening paragraph for your cover letter:\n")
-            print(cover)
-            print()
+            print(cover_text)
+            total_token_usage += tokens
+            print(f"[Token Tracker] Total tokens so far: {total_token_usage}\n")
             continue
 
         # 7. Otherwise, handle it as a regular chat turn
         else:
             messages.append({"role": "user", "content": user_input})
-            reply_obj = get_completion(messages)
-            reply = reply_obj.choices[0].message.content
-            print(f"\nJob Application Helper: {reply}\n")
-            messages.append({"role": "assistant", "content": reply})
+            reply_text, tokens = get_completion(messages)
+
+            print(f"\n{JOB_APP_NAME}: {reply_text}\n")
+            messages.append({"role": "assistant", "content": reply_text})
 
             # Token tracking
-            total_token_usage += reply_obj.usage.total_tokens
-            print(f"[Token Tracker] Total tokens used so far: {total_token_usage}")
+            total_token_usage += tokens
+            print(f"[Token Tracker] Total tokens used so far: {total_token_usage}\n")
 
             # Optional warning threshold
             if total_token_usage > 2000:
