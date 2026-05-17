@@ -214,7 +214,7 @@ knn_scaled = KNeighborsClassifier(n_neighbors=5)
 best_models["KNN_scaled"] = eval_model(
     "KNN (k=5) - scaled",
     knn_scaled,
-    X_train, X_test, y_train, y_test
+    X_train_scaled, X_test_scaled, y_train, y_test
 )
 
 # 3) KNN on PCA-reduced data
@@ -223,7 +223,7 @@ knn_pca = KNeighborsClassifier(n_neighbors=5)
 best_models["KNN_pca"] = eval_model(
     "KNN (k=5) - PCA",
     knn_pca,
-    X_train, X_test, y_train, y_test
+    X_train_pca, X_test_pca, y_train, y_test
 )
 
 # Scaling and PCA can help KNN because it relies on distances; PCA may reduce noise
@@ -304,7 +304,7 @@ log_reg_scaled = LogisticRegression(C=1.0, max_iter=1000, solver="liblinear")
 best_models["LogReg_scaled"] = eval_model(
     "Logistic Regression - scaled",
     log_reg_scaled,
-    X_train, X_test, y_train, y_test
+    X_train_scaled, X_test_scaled, y_train, y_test
 )
 
 # 7) Logistic Regression on PCA-reduced data
@@ -313,7 +313,7 @@ log_reg_pca = LogisticRegression(C=1.0, max_iter=1000, solver="liblinear")
 best_models["LogReg_pca"] = eval_model(
     "Logistic Regression - PCA",
     log_reg_pca,
-    X_train, X_test, y_train, y_test
+    X_train_pca, X_test_pca, y_train, y_test
 )
 
 # Logistic regression benefits from scaling; PCA can sometimes help by removing

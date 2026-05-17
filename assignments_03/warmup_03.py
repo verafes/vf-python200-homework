@@ -153,7 +153,7 @@ plt.title("KNN Confusion Matrix (Unscaled Data)")
 plt.tight_layout()
 plt.savefig("outputs/knn_confusion_matrix.png")
 plt.close()
-print(f"\nSample Digits plot saved to assignments_03/outputs")
+print(f"\nKNN confusion matrix saved to assignments_03/outputs")
 
 # The confusion matrix shows which species the model mixes up.
 # KNN most often confuses Versicolor and Virginica, since they are the most similar.
@@ -188,7 +188,7 @@ C_values = [0.01, 1.0, 100]
 
 for C in C_values:
     log_reg = LogisticRegression(
-        C=C, max_iter=1000, solver='lbfgs'
+        C=C, max_iter=1000, solver='liblinear'
     )
     log_reg.fit(X_train_scaled, y_train)
 
@@ -199,7 +199,9 @@ for C in C_values:
 # This is because C is the inverse of regularization strength;
 # A small C means strong regularization, which keeps weights small to prevent overfitting.
 # A large C weakens regularization, allowing the model to use larger weights to fit the data.
-
+# With liblinear, this effect is more pronounced because the solver applies stronger
+# coefficient shrinkage at small C values, so the total |coefficients| grows more clearly
+# as C increases.
 
 # --- PCA (Digits dataset) ---
 
