@@ -16,8 +16,8 @@ from pypdf import PdfReader
 from dotenv import load_dotenv
 
 load_dotenv()
-if os.getenv("OPENAI_API_KEY"):
-    print("Successfully loaded env variables from .env file")
+if load_dotenv():
+    print("API key loaded successfully.")
 else:
     print("Warning: could not load API key. Check your .env file.")
 
