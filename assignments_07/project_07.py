@@ -60,7 +60,8 @@ def load_happiness_data() -> dict:
     return {
         "shape": df.shape,
         "columns": list(df.columns),
-        "df": df.to_dict(orient="list")
+        # "df": df.to_dict(orient="list")
+        "df": df.to_json()
     }
 
 
@@ -137,22 +138,27 @@ def get_top_n_countries(column: str, year: int, n: int = 5) -> dict:
         return {"error": f"No data for year {year}."}
 
     top = subset.sort_values(column, ascending=False).head(n)
-    return {
-        "results": [
-            {"country": row["country"], column: row[column]}
-            for _, row in top.iterrows()
-        ]
-    }
+    return [
+        {"country": row["country"], column: row[column]}
+        for _, row in top.iterrows()
+    ]
 
 
 # --- Task 2 — Build the Agent ---
 
 SYSTEM_PROMPT = """
 You are a data analyst assistant for the World Happiness dataset.
-Use the available tools for loading data, summarizing columns, computing correlations,
-and ranking countries. Write Python code directly only when the tools are not sufficient
-(for example, when creating custom plots or computing something the tools don't cover).
-Be concise and student-friendly in your responses.
+Use the available tools for loading data, summarizing columns, computing correlations, and ranking countries. 
+Write Python code directly only when tools are insufficient.
+For multi-line regional plots, ALWAYS write Python code instead of calling tools.
+When using the output of load_happiness_data(), ALWAYS reconstruct the DataFrame using:
+df = pd.read_json(happiness_data["df"])
+Do NOT treat happiness_data as a DataFrame. It is a dict containing a JSON string.
+Do NOT print the entire DataFrame.
+When generating plots, place the legend on the right side using exactly:
+plt.legend(title='Region', bbox_to_anchor=(1.05, 1), loc='upper left')
+Also ALWAYS include bbox_inches='tight' in plt.savefig(...) so the legend is not cut off.
+Be concise and student-friendly.
 """
 
 TOOLS = [
@@ -171,29 +177,67 @@ def build_agent(api_key):
     )
     return agent
 
+def check_plot(filename: str):
+    path = OUTPUT_DIR / filename
+    print(f"{filename}: {'Exists' if path.exists() else 'Missing'}")
 
 if __name__ == "__main__":
 
     agent = build_agent(api_key)
 
+    plot_happiness = "happiness_by_region.png"
+    plot_hist = "hist.png"
     # Task 3 — Guided Queries
     QUERIES = [
         "Load the happiness data and tell me its shape and column names.",
         "Summarize the happiness_score column.",
         "What is the correlation between gdp_per_capita and happiness_score? Is it statistically significant?",
         "Show me the top 5 happiest countries in 2020.",
-        "Plot happiness_score over the years as a line chart, with one line per region. Save the plot to outputs/happiness_by_region.png.",
+        f"Plot happiness_score over the years as a line chart, with one line per region. Save the plot to outputs/{plot_happiness}.",
     ]
 
     for q in QUERIES:
         print(f"\n--- Query: {q} ---")
-        print(agent.run(q, reset=True))
+        print(agent.run(q, reset=False))
 
     # Task 4 — My Queries
-    my_query_1 = "Plot the distribution of happiness_score as a histogram and save it to outputs/hist.png."
+    my_query_1 = f"Plot the distribution of happiness_score as a histogram and save it to outputs/{plot_hist}."
     print(agent.run(my_query_1, reset=False))
+    # This triggered CODE GENERATION because no tool exists for histograms.
+    # The agent wrote matplotlib code to generate the plot.
 
     my_query_2 = "Which region had the highest average happiness_score in 2019?"
     print(agent.run(my_query_2, reset=False))
+    # This triggered TOOL USE (summarize_column + load_happiness_data)
+    # and some and some light CODE GENERATION to compute the groupby.
+
+    print("\n--- Verifying Plot Files ---")
+    check_plot(plot_happiness)
+    check_plot(plot_hist)
 
 
+# --- Task 5: Reflection ---
+# 1. In Query 3, agent correctly computed the Pearson correlation between gdp_per_capita and happiness_score.
+# It also reported the correlation and then marked the p-value as statistically significant,
+# because the p-value was 0.0, which is below the common threshold of 0.05.
+
+# 2. Query 5 revealed that the agent’s behavior could vary slightly across runs.
+# Sometimes the agent sometimes failed to access the correct column ('region') and sometimes succeeded.
+# These differences helped me identify weaknesses in my tool output and SYSTEM_PROMPT. After
+# refining the prompt and clarifying how the DataFrame should be reconstructed, the agent consistently
+# used the correct column ('regional_indicator') and generated the plot reliably.
+# This showed good debugging behavior and adaptability.
+
+# 3. Early runs also showed that returning the full DataFrame as a large dict caused the agent to print
+# thousands of rows and occasionally exceed the context window.
+# Switching the dataset output to JSON prevented this, and adding a SYSTEM_PROMPT rule to reconstruct
+# the DataFrame with pd.read_json(...) ensured that all later queries worked correctly.
+
+# 4. Adjusting the SYSTEM_PROMPT was an important part of the debugging process and stabilizing the pipeline.
+# Once I clarified how the agent should rebuild the DataFrame and how it should handle plotting,
+#  the results became consistent.
+
+# 5. A useful future improvement would be adding a "filter_rows" tool that lets the agent
+# filter the dataset by conditions (e.g., region == 'Europe', year >= 2019).
+# This would reduce the need for custom code and make more complex analytical queries
+# easier for the agent to handle.
