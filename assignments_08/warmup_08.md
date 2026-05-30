@@ -13,7 +13,7 @@ The core economic model of cloud computing is **pay‑as‑you‑go**, where we 
 ### Scenarios
 - **GIS or scientific simulation that runs as one giant process**: Vertical scaling — the model runs as a single big task, so it can’t be split across machines and needs a bigger, more powerful one.
 - **Web app jumps to 100,000 users:** Horizontal scaling — adding more identical web‑server instances behind a load balancer to handle a massive spike in concurrent traffic.
-- **Relational database struggling with complex, single‑threaded queries:** Vertical scaling — upgrading the database server’s CPU/RAM because the workload cannot be parallelized.
+- **A data scientist’s model training job needs a faster GPU and more RAM:** Vertical scaling — the job runs on one machine and needs a more powerful GPU and more memory.
 - **Pipeline grows from 10 → 10,000 files and can run in parallel:** Horizontal scaling — the work can be split across many machines.
 
 ---

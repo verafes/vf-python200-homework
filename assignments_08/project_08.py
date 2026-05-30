@@ -1,7 +1,7 @@
 # project_08.py
 
 # Fill in the hourly rates from your two Pricing Calculator estimates.
-rate_a = 0.010    # Standard_B1s hourly rate (Scenario A)
+rate_a = 0.0104    # Standard_B1s hourly rate (Scenario A)
 rate_b = 3.060    # Standard_NC6s_v3 hourly rate (Scenario B, VM only)
 
 hours_a = 160   # Scenario A: 8h/day, 5 days/week, ~4 weeks
