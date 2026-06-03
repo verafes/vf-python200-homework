@@ -9,7 +9,12 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
 from dotenv import load_dotenv
+
 load_dotenv()
+if load_dotenv():
+    print("Env variables loaded successfully.")
+else:
+    print("Warning: could not load variables. Check your .env file.")
 
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME")
 ACCOUNT_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net"
@@ -78,7 +83,7 @@ def read_back(container, blob_path, output_path=None):
         json.dump(parsed, f, indent=2)
 
 
-def project_pipline():
+def project_pipeline():
     """Run full pipeline."""
 
     # --- Setup ---
@@ -105,4 +110,4 @@ def project_pipline():
 
 
 if __name__ == "__main__":
-    project_pipline()
+    project_pipeline()
