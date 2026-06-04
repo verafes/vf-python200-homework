@@ -17,6 +17,8 @@ else:
     print("Warning: could not load variables. Check your .env file.")
 
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME")
+if not ACCOUNT_NAME:
+    print("Warning: missing ACCOUNT_NAME variable. Check your .env file.")
 ACCOUNT_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net"
 # ACCOUNT_URL = "https://veractd2026sa.blob.core.windows.net"
 
@@ -72,7 +74,10 @@ def verify_blobs(container):
 def read_back(container, blob_path, output_path=None):
     """Download blob, load DataFrame, save JSON to outputs."""
     blob_client = container.get_blob_client(blob_path)
-    downloaded = blob_client.download_blob().readall()
+    try:
+        downloaded = blob_client.download_blob().readall()
+    except Exception as e:
+        print(f"Download failed: {e}")
     parsed = json.loads(downloaded)
 
     df = pd.DataFrame(parsed["hourly"])
