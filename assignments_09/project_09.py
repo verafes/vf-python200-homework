@@ -1,3 +1,5 @@
+# Project 09 -video link - https://youtu.be/vflE5yuZxBs
+
 import os
 
 import json
@@ -10,7 +12,6 @@ from azure.storage.blob import BlobServiceClient
 
 from dotenv import load_dotenv
 
-load_dotenv()
 if load_dotenv():
     print("Env variables loaded successfully.")
 else:
