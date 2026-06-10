@@ -119,7 +119,7 @@ def make_user_message(record):
 
 
 def classify_record(client, record, valid_labels=None):
-    """Call Azure OpenAI to classify a single weather record."""
+    """Call OpenAI to classify a single weather record."""
     if valid_labels is None:
         valid_labels = VALID_LABELS
 
@@ -166,7 +166,7 @@ def upload_processed_blob(container, data, blob_path):
     blob_client = container.get_blob_client(blob_path)
     blob_client.upload_blob(payload, overwrite=True)
 
-    print(f"Uploaded {len(payload)} classified dataset to: {blob_path}")
+    print(f"Uploaded {len(data)} classified dataset to: {blob_path}")
     return blob_path
 
 
