@@ -1,0 +1,12 @@
+numpy
+pandas
+matplotlib
+seaborn
+scipy
+scikit-learn
+requests
+python-dotenv
+openai
+prefect
+llama-index-core
+llama-index-embeddings-openai
