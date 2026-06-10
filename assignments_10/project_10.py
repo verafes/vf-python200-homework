@@ -1,3 +1,12 @@
+# Reflection:
+# Classifying hourly weather conditions with an LLM works, but it is not the most efficient or necessary approach for this task.
+# The model can interpret borderline cases and handle ambiguous combinations of temperature and precipitation,
+# but this flexibility comes with higher cost, slower runtime, and potential inconsistency.
+# A deterministic rule-based system (e.g., temperature > 10  and precipitation < 1 → good) would be faster, cheaper,
+# and fully predictable. By switching to rules, we lose the LLM’s ability to generalize nuanced conditions,
+# but we gain full control, transparency, and predictable output.
+
+
 import json
 import os
 from datetime import date
@@ -107,12 +116,12 @@ def make_user_message(record):
     )
 
 
-def classify_record(client: ContainerClient, record, valid_labels=None):
+def classify_record(client, record, valid_labels=None):
     """Call Azure OpenAI to classify a single weather record."""
     if valid_labels is None:
         valid_labels = VALID_LABELS
 
-    user_msg = make_user_message()
+    user_msg = make_user_message(record)
 
     try:
         response = client.chat.completions.create(
@@ -156,6 +165,7 @@ def upload_processed_blob(container, data, blob_path):
     blob_client.upload_blob(payload, overwrite=True)
 
     print(f"Uploaded {len(payload)} classified dataset to: {blob_path}")
+    return blob_path
 
 
 def spot_check(container, blob_path: str):
