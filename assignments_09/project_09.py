@@ -20,6 +20,10 @@ else:
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME")
 if not ACCOUNT_NAME:
     print("Warning: missing ACCOUNT_NAME variable. Check your .env file.")
+    raise ValueError(
+        "Missing ACCOUNT_NAME environment variable. "
+        "Set it in your .env file (ACCOUNT_NAME=<your-storage-account>)."
+    )
 ACCOUNT_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net"
 # ACCOUNT_URL = "https://veractd2026sa.blob.core.windows.net"
 
