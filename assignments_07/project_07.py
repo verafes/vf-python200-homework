@@ -40,6 +40,10 @@ def load_happiness_data() -> dict:
     loads and merges all yearly CSVs from assignments/resources/happiness_project/.
     Stores the result in the global df and returns a dict with shape and columns.
 
+    The returned "df" field contains a JSON string produced by df.to_json().
+    The agent must rebuild the DataFrame using:
+        df = pd.read_json(happiness_data["df"])
+
     Returns:
         dict: A dictionary with dataset shape, columns, and the dataframe as a dict.
     """
@@ -60,7 +64,6 @@ def load_happiness_data() -> dict:
     return {
         "shape": df.shape,
         "columns": list(df.columns),
-        # "df": df.to_dict(orient="list")
         "df": df.to_json()
     }
 
@@ -114,7 +117,7 @@ def compute_correlation(col1: str, col2: str) -> dict:
 
 
 @tool
-def get_top_n_countries(column: str, year: int, n: int = 5) -> dict:
+def get_top_n_countries(column: str, year: int, n: int = 5) -> list[dict]:
     """Return the top N countries ranked by a given column for a specific year.
 
     Args:
@@ -123,7 +126,9 @@ def get_top_n_countries(column: str, year: int, n: int = 5) -> dict:
         n (int): The number of top countries to return
 
     Returns:
-        dict: A dictionary containing the dataset shape and column names.
+        list[dict]: Returns a list of dictionaries, each containing:
+            - "country": the country name
+            - <column>: the column value used for ranking
     """
     global df
     if df is None:
