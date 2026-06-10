@@ -6,6 +6,7 @@
 # and fully predictable. By switching to rules, we lose the LLM’s ability to generalize nuanced conditions,
 # but we gain full control, transparency, and predictable output.
 
+# Project 10 - video link: https://youtu.be/V6_B5Hf0LK0
 
 import json
 import os
@@ -14,7 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import ContainerClient, BlobServiceClient
+from azure.storage.blob import BlobServiceClient
 from openai import OpenAI
 
 from dotenv import load_dotenv
@@ -31,6 +32,7 @@ ACCOUNT_NAME = os.getenv("ACCOUNT_NAME")
 if not ACCOUNT_NAME:
     print("Warning: missing ACCOUNT_NAME variable. Check your .env file.")
 ACCOUNT_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net"
+# ACCOUNT_URL = "https://veractd2026sa.blob.core.windows.net"
 
 CONTAINER = "pipeline-data"
 
@@ -211,8 +213,7 @@ def transform_pipeline():
     processed_records = spot_check(container, processed_blob_path)
 
     # Step 5: Save Output
-    outputs_dir = Path("outputs")
-    outputs_dir.mkdir(exist_ok=True)
+    OUTPUT_DIR.mkdir(exist_ok=True)
     save_records(processed_records[:10], OUTPUT)
 
 
