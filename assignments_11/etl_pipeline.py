@@ -80,7 +80,7 @@ def get_blob_clients():
     return blob_service, container
 
 def verify_blobs(container, logger):
-    """Print all blob names and sizes."""
+    """Logging all blob names and sizes."""
     logger.info("Verifying blobs in container...")
     for blob in container.list_blobs():
         logger.info(f"- {blob.name} ({blob.size} bytes)")
@@ -200,7 +200,7 @@ def transform_weather(client: OpenAI, records: dict, max_records: int) -> list[d
         enriched_records.append(enriched)
 
         if (i + 1) % 6 == 0:
-            print(f"Processed {i + 1} records...")
+            logger.info(f"Processed {i + 1} records...")
 
     logger.info(f"Finished processing {len(enriched_records)} records.")
     logger.info("Transform step completed.")
