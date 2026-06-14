@@ -18,6 +18,8 @@ Container:
 
 Blob Path:
     final/YYYY-MM-DD/weather_etl.json
+
+ETL_pipline video : https://youtu.be/pRXhVcDFuIw
 """
 
 import os
