@@ -10,3 +10,5 @@ openai
 prefect
 llama-index-core
 llama-index-embeddings-openai
+azure-storage-blob
+azure-identity
