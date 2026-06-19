@@ -93,7 +93,7 @@ def read_back(container, blob_path, output_path=None):
         json.dump(parsed, f, indent=2)
 
 
-def project_pipeline():
+def extract_pipeline():
     """Run full pipeline."""
 
     # --- Setup ---
@@ -120,4 +120,4 @@ def project_pipeline():
 
 
 if __name__ == "__main__":
-    project_pipeline()
+    extract_pipeline()
